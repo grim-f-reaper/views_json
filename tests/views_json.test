@@ -9,6 +9,9 @@
  */
 class ViewsJsonBasicTest extends BackdropWebTestCase {
 
+  private $nodes = array();
+  const NODES_COUNT = 2;
+
   protected $profile = 'testing';
 
   /**
@@ -17,16 +20,14 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   public function setUp() {
     parent::setUp('views_ui', 'views_json');
 
-    // Dummy content.
+    // Dummy content, saved to private variable as cache.
     $type = $this->backdropCreateContentType();
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 1',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 2',
-      'type' => $type->type,
-    ));
+    for ($i = 0; $i < self::NODES_COUNT; $i++) {
+      $this->nodes[] = $this->backdropCreateNode(array(
+        'title' => sprintf('Test content %d', $i + 1),
+        'type'=> $type->type,
+      ));
+    }
 
     // Create and log in a user with administer views permission.
     $views_admin = $this->backdropCreateUser(array(
@@ -56,6 +57,9 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $view['page[pager]'] = '0';
     $this->backdropPost('admin/structure/views/add', $view, t('Save view'));
 
+    // To adapt settings not available via above form.
+    $loaded_view = views_get_view($view_name);
+
     $this->backdropGet($path);
     $exptected_output = '{"nodes":[{"node":{"title":"Test content 1"}},{"node":{"title":"Test content 2"}}]}';
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'Expected JSON output found.');
@@ -63,16 +67,14 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $headers = $this->backdropGetHeaders();
     $this->assertEqual($headers['content-type'], 'application/json; charset=utf-8', 'Expected content type delivered.');
 
-    // To adapt settings not available via above form:
-    $loaded_view = views_get_view($view_name);
-
     // Add the "nid" field and check display.
     $loaded_view->display['default']->display_options['fields']['nid']['id'] = 'nid';
     $loaded_view->display['default']->display_options['fields']['nid']['table'] = 'node';
     $loaded_view->display['default']->display_options['fields']['nid']['field'] = 'nid';
     $loaded_view->save();
     $this->backdropGet($path);
-    $exptected_output = '{"nodes":[{"node":{"title":"Test content 1","Nid":"1"}},{"node":{"title":"Test content 2","Nid":"2"}}]}';
+    //$exptected_output = '{"nodes":[{"node":{"title":"Test content 1","Nid":"1"}},{"node":{"title":"Test content 2","Nid":"2"}}]}';
+    $exptected_output = $this->createExpectedOutput($loaded_view); 
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'Expected JSON output found with NID');
 
     // Switch numeric option and check display.
@@ -103,12 +105,50 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
 
     // Style options aren't available via main form.
     $loaded_view = views_get_view($view_name);
+
     $loaded_view->display['default']->display_options['style_options']['format'] = 'simple_object';
     $loaded_view->save();
     $this->backdropGet($path);
     $this->assertEqual($this->backdropGetContent(), '{"title":"Test content 2"}', 'Expected JSON output found for simple object.');
     $headers = $this->backdropGetHeaders();
     $this->assertEqual($headers['content-type'], 'application/json; charset=utf-8', 'Expected content type delivered.');
+  }
+
+  /**
+   * Helper function to create an JSON string from the cached nodes and view settings.
+   * 
+   * @param $nodes: An array of nodes to render as JSON. Defaults to $this->nodes.
+   * 
+   * @return string JSON string
+   */
+  private function createExpectedOutput($view, $nodes = NULL) {
+    $json = array('nodes' => array());
+
+    foreach ($nodes ?: $this->nodes as $node) {
+      $json_node = array('title' => $node->title);
+      $node->title = 
+      $json['nodes'][] = array('node' => array(
+        'title' => $node->title,
+        'Nid'=> (string)$node->nid,
+      ));
+    }
+
+    return json_encode($json);
+  }
+
+  /**
+   * Check that the output from the createExpectedOutput() helper matches expectations.
+   * 
+   * NOTE: we use the original static test strings from an earlier iteration.
+   */
+  public function testCreateExpectedOutput() {
+    $nodes = array(
+      (object) array('title' => 'Test content 1', 'nid' => 1),
+      (object) array('title' => 'Test content 2', 'nid' => 2),
+    );
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 1","Nid":"1"}},{"node":{"title":"Test content 2","Nid":"2"}}]}';
+    $created_outputed = $this->createExpectedOutput(NULL, $nodes);
+    $this->assertEqual($exptected_output, $created_outputed, 'Expected JSON output found with NID');
   }
 
 }
