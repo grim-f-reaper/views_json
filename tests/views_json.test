@@ -217,4 +217,33 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for simple object.', self::VIEWS_JSON_GROUP);
   }
 
+    /**
+   * Check output from the simple object setting.
+   */
+  public function testJsonOutputJqGrid() {
+    // Create the view.
+    $view_name = strtolower($this->randomName(16));
+    $path = $this->randomName(16);
+    $view_form = array(
+      'human_name' => $this->randomName(16),
+      'name' => $view_name,
+      'page[create]' => 1,
+      'page[style][style_plugin]' =>'views_json',
+      'page[path]' => $path,
+    );
+    $this->backdropPost('admin/structure/views/add', $view_form, t('Save view'));
+
+    // Get the View object to alter settings.
+    $view = views_get_view($view_name);
+
+    // Set the jqGrid output option.
+    $view->display['default']->display_options['style_options']['format'] = 'jqgrid';
+    $view->save();
+
+    // TEST the simple object output.
+    $this->backdropGet($path);
+    $exptected_output = '{"page":1,"records":"15","total":2,"rows":[{"title":"Test content 15"},{"title":"Test content 14"},{"title":"Test content 13"},{"title":"Test content 12"},{"title":"Test content 11"},{"title":"Test content 10"},{"title":"Test content 9"},{"title":"Test content 8"},{"title":"Test content 7"},{"title":"Test content 6"}]}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for jqGrid.', self::VIEWS_JSON_GROUP);
+  }
+
 }
