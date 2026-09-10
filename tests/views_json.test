@@ -246,7 +246,7 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for jqGrid.', self::VIEWS_JSON_GROUP);
   }
 
-    /**
+  /**
    * Check output from the Backdrop autocomplete setting.
    */
   public function testJsonOutputBackdropAutocomplete() {
