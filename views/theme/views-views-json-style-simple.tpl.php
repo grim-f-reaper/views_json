@@ -71,6 +71,9 @@ if ($view->override_path) {
   print "<code>$json</code>";
 }
 else {
+  // @todo $bitmask is not set upstream for jqGrid setting, so guard that.
+  $bitmask = !isset($bitmask) ? NULL : $bitmask;
+  
   $json = _views_json_json_encode($rows, $bitmask);
   if ($options['remove_newlines']) {
      $json = preg_replace(array('/\\\\n/'), '', $json);
