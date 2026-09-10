@@ -10,6 +10,7 @@
 class ViewsJsonBasicTest extends BackdropWebTestCase {
 
   protected $profile = 'testing';
+  const VIEWS_JSON_GROUP = 'Views JSON';
 
   /**
    * {@inheritdoc}
@@ -17,7 +18,7 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   public function setUp() {
     parent::setUp('views_ui', 'views_json');
 
-    // Dummy content.
+    // Dummy content 15 items so we can test pagers fully.
     $type = $this->backdropCreateContentType();
     $this->backdropCreateNode(array(
       'title' => 'Test content 1',
@@ -25,6 +26,58 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     ));
     $this->backdropCreateNode(array(
       'title' => 'Test content 2',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 3',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 4',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 5',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 6',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 7',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 8',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 9',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 10',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 11',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 12',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 13',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 14',
+      'type' => $type->type,
+    ));
+    $this->backdropCreateNode(array(
+      'title' => 'Test content 15',
       'type' => $type->type,
     ));
 
@@ -39,76 +92,93 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   }
 
   /**
-   * Check output from JSON data format "Simple" (default).
+   * Check output from the Views default.
+   *
+   * No fields, filters, sorting, pager, etc settings are altered.
    */
-  public function testJsonOutputSimple() {
-    $path = $this->randomName(16);
-    $view = array();
+  public function testJsonOutputDefault() {
+    // Create the view.
     $view_name = strtolower($this->randomName(16));
-    $view['human_name'] = $this->randomName(16);
-    $view['name'] = $view_name;
-    $view['description'] = $this->randomName(16);
-    $view['page[create]'] = 1;
-    $view['page[style][style_plugin]'] = 'views_json';
-    $view['page[path]'] = $path;
-    $view['page[style][row_plugin]'] = 'fields';
-    $view['page[items_per_page]'] = '0';
-    $view['page[pager]'] = '0';
-    $this->backdropPost('admin/structure/views/add', $view, t('Save view'));
+    $path = $this->randomName(16);
+    $view_form = array();
+    $view_form['human_name'] = $this->randomName(16);
+    $view_form['name'] = $view_name;
+    $view_form['page[create]'] = 1;
+    $view_form['page[style][style_plugin]'] = 'views_json';
+    $view_form['page[path]'] = $path;
+    $this->backdropPost('admin/structure/views/add', $view_form, t('Save view'));
 
+    // Get the View object to alter settings.
+    $view = views_get_view($view_name);
+
+    // TEST the default settings.
     $this->backdropGet($path);
-    $exptected_output = '{"nodes":[{"node":{"title":"Test content 1"}},{"node":{"title":"Test content 2"}}]}';
-    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'Expected JSON output found.');
-
     $headers = $this->backdropGetHeaders();
-    $this->assertEqual($headers['content-type'], 'application/json; charset=utf-8', 'Expected content type delivered.');
+    $this->assertEqual($headers['content-type'], 'application/json; charset=utf-8', 'JSON reponse content type.');
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15"}},{"node":{"title":"Test content 14"}},{"node":{"title":"Test content 13"}},{"node":{"title":"Test content 12"}},{"node":{"title":"Test content 11"}},{"node":{"title":"Test content 10"}},{"node":{"title":"Test content 9"}},{"node":{"title":"Test content 8"}},{"node":{"title":"Test content 7"}},{"node":{"title":"Test content 6"}}],"pager":{"pages":2,"page":0,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for defaults.', self::VIEWS_JSON_GROUP);
+    // Repeat the test for the second page.
+    $this->backdropGet($path, array('query' => array('page' => 1)));
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 5"}},{"node":{"title":"Test content 4"}},{"node":{"title":"Test content 3"}},{"node":{"title":"Test content 2"}},{"node":{"title":"Test content 1"}}],"pager":{"pages":2,"page":1,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for defaults second page.', self::VIEWS_JSON_GROUP);
 
-    // To adapt settings not available via above form:
-    $loaded_view = views_get_view($view_name);
+    // Add the "Nid" field.
+    $view->display['default']->display_options['fields']['nid']['id'] = 'nid';
+    $view->display['default']->display_options['fields']['nid']['table'] = 'node';
+    $view->display['default']->display_options['fields']['nid']['field'] = 'nid';
+    $view->save();
 
-    // Add the "nid" field and check display.
-    $loaded_view->display['default']->display_options['fields']['nid']['id'] = 'nid';
-    $loaded_view->display['default']->display_options['fields']['nid']['table'] = 'node';
-    $loaded_view->display['default']->display_options['fields']['nid']['field'] = 'nid';
-    $loaded_view->save();
+    // TEST with added "Nid" field.
     $this->backdropGet($path);
-    $exptected_output = '{"nodes":[{"node":{"title":"Test content 1","Nid":"1"}},{"node":{"title":"Test content 2","Nid":"2"}}]}';
-    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'Expected JSON output found with NID');
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15","Nid":"15"}},{"node":{"title":"Test content 14","Nid":"14"}},{"node":{"title":"Test content 13","Nid":"13"}},{"node":{"title":"Test content 12","Nid":"12"}},{"node":{"title":"Test content 11","Nid":"11"}},{"node":{"title":"Test content 10","Nid":"10"}},{"node":{"title":"Test content 9","Nid":"9"}},{"node":{"title":"Test content 8","Nid":"8"}},{"node":{"title":"Test content 7","Nid":"7"}},{"node":{"title":"Test content 6","Nid":"6"}}],"pager":{"pages":2,"page":0,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for added Nid field.', self::VIEWS_JSON_GROUP);
+    // Repeat the test for the second page.
+    $this->backdropGet($path, array('query' => array('page' => 1)));
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 5","Nid":"5"}},{"node":{"title":"Test content 4","Nid":"4"}},{"node":{"title":"Test content 3","Nid":"3"}},{"node":{"title":"Test content 2","Nid":"2"}},{"node":{"title":"Test content 1","Nid":"1"}}],"pager":{"pages":2,"page":1,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for added Nid field second page.', self::VIEWS_JSON_GROUP);
 
-    // Switch numeric option and check display.
-    $loaded_view->display['default']->display_options['style_options']['numeric_strings'] = TRUE;
-    $loaded_view->save();
+    // Set the "numeric strings" option.
+    $view->display['default']->display_options['style_options']['numeric_strings'] = TRUE;
+    $view->save();
+
+    // TEST with numeric strings.
     $this->backdropGet($path);
-    $exptected_output = '{"nodes":[{"node":{"title":"Test content 1","Nid":1}},{"node":{"title":"Test content 2","Nid":2}}]}';
-    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'Expected JSON output found, NID displays as number.');
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15","Nid":15}},{"node":{"title":"Test content 14","Nid":14}},{"node":{"title":"Test content 13","Nid":13}},{"node":{"title":"Test content 12","Nid":12}},{"node":{"title":"Test content 11","Nid":11}},{"node":{"title":"Test content 10","Nid":10}},{"node":{"title":"Test content 9","Nid":9}},{"node":{"title":"Test content 8","Nid":8}},{"node":{"title":"Test content 7","Nid":7}},{"node":{"title":"Test content 6","Nid":6}}],"pager":{"pages":2,"page":0,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for numeric strings setting.', self::VIEWS_JSON_GROUP);
+    // Repeat the test for the second page.
+    $this->backdropGet($path, array('query' => array('page' => 1)));
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 5","Nid":5}},{"node":{"title":"Test content 4","Nid":4}},{"node":{"title":"Test content 3","Nid":3}},{"node":{"title":"Test content 2","Nid":2}},{"node":{"title":"Test content 1","Nid":1}}],"pager":{"pages":2,"page":1,"count":15,"limit":10}}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for numeric strings setting second page.', self::VIEWS_JSON_GROUP);
   }
 
   /**
    * Check output from format "Single Simple Object with key value properties"
    */
   public function testJsonOutputSimpleObject() {
-    $path = $this->randomName(16);
-    $view = array();
+    // Create the view.
     $view_name = strtolower($this->randomName(16));
-    $view['human_name'] = $this->randomName(16);
-    $view['name'] = $view_name;
-    $view['description'] = $this->randomName(16);
-    $view['page[create]'] = 1;
-    $view['page[style][style_plugin]'] = 'views_json';
-    $view['page[path]'] = $path;
-    $view['page[style][row_plugin]'] = 'fields';
-    $view['page[items_per_page]'] = 1;
-    $view['page[pager]'] = FALSE;
-    $this->backdropPost('admin/structure/views/add', $view, t('Save view'));
+    $path = $this->randomName(16);
+    $view_form = array();
+    $view_form['human_name'] = $this->randomName(16);
+    $view_form['name'] = $view_name;
+    $view_form['page[create]'] = 1;
+    $view_form['page[style][style_plugin]'] = 'views_json';
+    $view_form['page[path]'] = $path;
+    $view_form['page[items_per_page]'] = 1;
+    $view_form['page[pager]'] = 0;
+    $this->backdropPost('admin/structure/views/add', $view_form, t('Save view'));
 
-    // Style options aren't available via main form.
-    $loaded_view = views_get_view($view_name);
-    $loaded_view->display['default']->display_options['style_options']['format'] = 'simple_object';
-    $loaded_view->save();
+    // Get the View object to alter settings.
+    $view = views_get_view($view_name);
+
+    // Set the simple object output option.
+    $view->display['default']->display_options['style_options']['format'] = 'simple_object';
+    $view->save();
+
+    // TEST the simple object output.
     $this->backdropGet($path);
-    $this->assertEqual($this->backdropGetContent(), '{"title":"Test content 2"}', 'Expected JSON output found for simple object.');
-    $headers = $this->backdropGetHeaders();
-    $this->assertEqual($headers['content-type'], 'application/json; charset=utf-8', 'Expected content type delivered.');
+    $exptected_output = '{"title":"Test content 15"}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for simple object.', self::VIEWS_JSON_GROUP);
   }
 
 }
