@@ -92,7 +92,7 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   }
 
   /**
-   * Check output from the default settings.
+   * Check output from the default (simple) setting.
    */
   public function testJsonOutputDefault() {
     // Create the view.
@@ -147,6 +147,56 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $this->backdropGet($path, array('query' => array('page' => 1)));
     $exptected_output = '{"nodes":[{"node":{"title":"Test content 5","Nid":5}},{"node":{"title":"Test content 4","Nid":4}},{"node":{"title":"Test content 3","Nid":3}},{"node":{"title":"Test content 2","Nid":2}},{"node":{"title":"Test content 1","Nid":1}}],"pager":{"pages":2,"page":1,"count":15,"limit":10}}';
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for numeric strings setting second page.', self::VIEWS_JSON_GROUP);
+  }
+
+  /**
+   * Check output from the simple setting with no pager info in JSON and all items, 
+   */
+  public function testJsonOutputDefaultNoPagerAllItems() {
+    // Create the view.
+    $view_name = strtolower($this->randomName(16));
+    $path = $this->randomName(16);
+    $view_form = array();
+    $view_form['human_name'] = $this->randomName(16);
+    $view_form['name'] = $view_name;
+    $view_form['page[create]'] = 1;
+    $view_form['page[style][style_plugin]'] = 'views_json';
+    $view_form['page[path]'] = $path;
+    $view_form['page[pager]'] = FALSE;
+    $view_form['page[items_per_page]'] = 0;
+    $this->backdropPost('admin/structure/views/add', $view_form, t('Save view'));
+
+    // Get the View object to alter settings.
+    $view = views_get_view($view_name);
+
+    // Removing pager flips sort order - fix that for consistency.
+    $view->display['default']->display_options['sorts'] = array('nid' => array('id' => 'nid', 'table' => 'node', 'field' => 'nid', 'order' => 'DESC'));
+    $view->save();
+
+    // TEST the default settings.
+    $this->backdropGet($path);
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15"}},{"node":{"title":"Test content 14"}},{"node":{"title":"Test content 13"}},{"node":{"title":"Test content 12"}},{"node":{"title":"Test content 11"}},{"node":{"title":"Test content 10"}},{"node":{"title":"Test content 9"}},{"node":{"title":"Test content 8"}},{"node":{"title":"Test content 7"}},{"node":{"title":"Test content 6"}},{"node":{"title":"Test content 5"}},{"node":{"title":"Test content 4"}},{"node":{"title":"Test content 3"}},{"node":{"title":"Test content 2"}},{"node":{"title":"Test content 1"}}]}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for no pager with all items.', self::VIEWS_JSON_GROUP);
+
+    // Add the "Nid" field.
+    $view->display['default']->display_options['fields']['nid']['id'] = 'nid';
+    $view->display['default']->display_options['fields']['nid']['table'] = 'node';
+    $view->display['default']->display_options['fields']['nid']['field'] = 'nid';
+    $view->save();
+
+    // TEST with added "Nid" field.
+    $this->backdropGet($path);
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15","Nid":"15"}},{"node":{"title":"Test content 14","Nid":"14"}},{"node":{"title":"Test content 13","Nid":"13"}},{"node":{"title":"Test content 12","Nid":"12"}},{"node":{"title":"Test content 11","Nid":"11"}},{"node":{"title":"Test content 10","Nid":"10"}},{"node":{"title":"Test content 9","Nid":"9"}},{"node":{"title":"Test content 8","Nid":"8"}},{"node":{"title":"Test content 7","Nid":"7"}},{"node":{"title":"Test content 6","Nid":"6"}},{"node":{"title":"Test content 5","Nid":"5"}},{"node":{"title":"Test content 4","Nid":"4"}},{"node":{"title":"Test content 3","Nid":"3"}},{"node":{"title":"Test content 2","Nid":"2"}},{"node":{"title":"Test content 1","Nid":"1"}}]}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for added Nid field and no pager with all items.', self::VIEWS_JSON_GROUP);
+    
+    // Set the "numeric strings" option.
+    $view->display['default']->display_options['style_options']['numeric_strings'] = TRUE;
+    $view->save();
+
+    // TEST with numeric strings.
+    $this->backdropGet($path);
+    $exptected_output = '{"nodes":[{"node":{"title":"Test content 15","Nid":15}},{"node":{"title":"Test content 14","Nid":14}},{"node":{"title":"Test content 13","Nid":13}},{"node":{"title":"Test content 12","Nid":12}},{"node":{"title":"Test content 11","Nid":11}},{"node":{"title":"Test content 10","Nid":10}},{"node":{"title":"Test content 9","Nid":9}},{"node":{"title":"Test content 8","Nid":8}},{"node":{"title":"Test content 7","Nid":7}},{"node":{"title":"Test content 6","Nid":6}},{"node":{"title":"Test content 5","Nid":5}},{"node":{"title":"Test content 4","Nid":4}},{"node":{"title":"Test content 3","Nid":3}},{"node":{"title":"Test content 2","Nid":2}},{"node":{"title":"Test content 1","Nid":1}}]}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for numeric strings setting and no pager with all items.', self::VIEWS_JSON_GROUP);
   }
 
   /**
