@@ -92,9 +92,7 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   }
 
   /**
-   * Check output from the Views default.
-   *
-   * No fields, filters, sorting, pager, etc settings are altered.
+   * Check output from the default settings.
    */
   public function testJsonOutputDefault() {
     // Create the view.
@@ -152,7 +150,35 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
   }
 
   /**
-   * Check output from format "Single Simple Object with key value properties"
+   * Check output from the MIT Simile/Exhibit setting.
+   */
+  public function testMitSimileExhibit() {
+    // Create the view.
+    $view_name = strtolower($this->randomName(16));
+    $path = $this->randomName(16);
+    $view_form = array();
+    $view_form['human_name'] = $this->randomName(16);
+    $view_form['name'] = $view_name;
+    $view_form['page[create]'] = 1;
+    $view_form['page[style][style_plugin]'] = 'views_json';
+    $view_form['page[path]'] = $path;
+    $this->backdropPost('admin/structure/views/add', $view_form, t('Save view'));
+
+    // Get the View object to alter settings.
+    $view = views_get_view($view_name);
+
+    // Set the MIT Simile/Exhibit output option.
+    $view->display['default']->display_options['style_options']['format'] = 'exhibit';
+    $view->save();    
+
+    // TEST the settings.
+    $this->backdropGet($path);
+    $exptected_output = '{"Items":[{"node":{"title":"Test content 15"},"label":"Item","type":"node"},{"node":{"title":"Test content 14"},"label":"Item","type":"node"},{"node":{"title":"Test content 13"},"label":"Item","type":"node"},{"node":{"title":"Test content 12"},"label":"Item","type":"node"},{"node":{"title":"Test content 11"},"label":"Item","type":"node"},{"node":{"title":"Test content 10"},"label":"Item","type":"node"},{"node":{"title":"Test content 9"},"label":"Item","type":"node"},{"node":{"title":"Test content 8"},"label":"Item","type":"node"},{"node":{"title":"Test content 7"},"label":"Item","type":"node"},{"node":{"title":"Test content 6"},"label":"Item","type":"node"}]}';
+    $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for MIT Simile/Exhibit.', self::VIEWS_JSON_GROUP);
+  }
+
+  /**
+   * Check output from the simple object setting.
    */
   public function testJsonOutputSimpleObject() {
     // Create the view.
