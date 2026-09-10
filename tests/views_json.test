@@ -269,7 +269,7 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $view->display['default']->display_options['style_options']['format'] = 'autocomplete';
     $view->save();
 
-    // TEST the simple object output.
+    // TEST the Backdrop autocomplete output.
     $this->backdropGet($path);
     $exptected_output = '{"Test content 15":"Test content 15","Test content 14":"Test content 14","Test content 13":"Test content 13","Test content 12":"Test content 12","Test content 11":"Test content 11","Test content 10":"Test content 10","Test content 9":"Test content 9","Test content 8":"Test content 8","Test content 7":"Test content 7","Test content 6":"Test content 6"}';
     $this->assertEqual($this->backdropGetContent(), $exptected_output, 'JSON output for Backdrop autocomplete.', self::VIEWS_JSON_GROUP);
