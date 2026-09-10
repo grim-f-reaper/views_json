@@ -85,7 +85,6 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     $views_admin = $this->backdropCreateUser(array(
       'administer views',
       'access all views',
-      'bypass node access',
     ));
     $this->backdropLogin($views_admin);
     return TRUE;
