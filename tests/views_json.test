@@ -19,67 +19,15 @@ class ViewsJsonBasicTest extends BackdropWebTestCase {
     parent::setUp('views_ui', 'views_json');
 
     // Dummy content 15 items so we can test pagers fully.
+    //   NOTE: do not change the number of items without realising that this
+    //         will affect full output tests!
     $type = $this->backdropCreateContentType();
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 1',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 2',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 3',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 4',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 5',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 6',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 7',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 8',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 9',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 10',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 11',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 12',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 13',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 14',
-      'type' => $type->type,
-    ));
-    $this->backdropCreateNode(array(
-      'title' => 'Test content 15',
-      'type' => $type->type,
-    ));
+    for ($i = 1; $i <= 15; $i++) {
+      $this->backdropCreateNode(array(
+        'title' => sprintf('Test content %d', $i),
+        'type' => $type->type,
+      ));
+    }
 
     // Create and log in a user with administer views permission.
     $views_admin = $this->backdropCreateUser(array(
